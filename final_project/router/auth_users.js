@@ -10,14 +10,10 @@ const isValid = (username)=>{ //returns boolean
 }
 
 const authenticatedUser = (username,password)=>{
-  let validusers = users.filter((user)=>{
-    return (user.username === username && user.password === password)
+  let validusers = users.filter((user) => {
+    return (user.username === username && user.password === password);
   });
-  if(validusers.length > 0){
-    return true;
-  } else {
-    return false;
-  }
+  return validusers.length > 0;
 }
 
 //only registered users can login
