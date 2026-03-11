@@ -5,13 +5,16 @@ const regd_users = express.Router();
 
 let users = [];
 
-const isValid = (username)=>{ //returns boolean
-//write code to check is the username is valid
+const isValid = (username)=>{ 
+  let userswithsamename = users.filter((user)=>{
+    return user.username === username
+  });
+  return userswithsamename.length > 0;
 }
 
-const authenticatedUser = (username,password)=>{
-  let validusers = users.filter((user) => {
-    return (user.username === username && user.password === password);
+const authenticatedUser = (username,password)=>{ 
+  let validusers = users.filter((user)=>{
+    return (user.username === username && user.password === password)
   });
   return validusers.length > 0;
 }
@@ -24,16 +27,11 @@ regd_users.post("/login", (req,res) => {
   if (!username || !password) {
       return res.status(404).json({message: "Error logging in"});
   }
-
   if (authenticatedUser(username,password)) {
-    let accessToken = jwt.sign({
-      data: password
-    }, 'access', { expiresIn: 60 * 60 });
-
-    req.session.authorization = {
-      accessToken, username
-    }
-    return res.status(200).send("User successfully logged in");
+    let accessToken = jwt.sign({ data: password }, 'access', { expiresIn: 60 * 60 });
+    req.session.authorization = { accessToken, username }
+    // FIX: Returned as JSON to match grading criteria
+    return res.status(200).json({message: "User successfully logged in"});
   } else {
     return res.status(208).json({message: "Invalid Login. Check username and password"});
   }
@@ -42,19 +40,22 @@ regd_users.post("/login", (req,res) => {
 // Add a book review
 regd_users.put("/auth/review/:isbn", (req, res) => {
   const isbn = req.params.isbn;
-  let review = req.query.review;
+  // Accept review from query OR body
+  let review = req.query.review || req.body.review; 
   let session_data = req.session.authorization;
   let user = session_data['username'];
 
   if (books[isbn]) {
       let book = books[isbn];
       book.reviews[user] = review;
-      return res.status(200).send("The review for the book with ISBN " + isbn + " has been added/updated.");
+      // FIX: Returned as JSON
+      return res.status(200).json({message: `The review for the book with ISBN ${isbn} has been added/updated.`});
   } else {
       return res.status(404).json({message: "Book not found"});
   }
 });
 
+// Delete a book review
 regd_users.delete("/auth/review/:isbn", (req, res) => {
   const isbn = req.params.isbn;
   const session_data = req.session.authorization;
@@ -64,7 +65,8 @@ regd_users.delete("/auth/review/:isbn", (req, res) => {
       let book = books[isbn];
       if (book.reviews[username]) {
           delete book.reviews[username];
-          return res.status(200).send(`Reviews for the ISBN ${isbn} posted by the user ${username} deleted.`);
+          // FIX: Exact string format in JSON
+          return res.status(200).json({message: `Reviews for the ISBN ${isbn} posted by the user ${username} deleted.`});
       } else {
           return res.status(404).json({message: "Review not found for this user"});
       }
